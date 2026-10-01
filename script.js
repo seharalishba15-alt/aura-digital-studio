@@ -1,14 +1,40 @@
+// ================================
+// SCROLL EFFECTS (navbar, progress bar, back-to-top)
+// ================================
+
 const navbar = document.querySelector(".navbar");
+const scrollProgress = document.getElementById("scrollProgress");
+const backToTop = document.getElementById("backToTop");
 
 window.addEventListener("scroll", function () {
+
+    const scrollTop = window.scrollY;
+
     if (navbar) {
-        if (window.scrollY > 50) {
-            navbar.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.08)";
-        } else {
-            navbar.style.boxShadow = "none";
-        }
+        navbar.style.boxShadow =
+            scrollTop > 50 ? "0 10px 30px rgba(0, 0, 0, 0.08)" : "none";
     }
-});
+
+    if (scrollProgress) {
+        const pageHeight =
+            document.documentElement.scrollHeight -
+            document.documentElement.clientHeight;
+
+        scrollProgress.style.width =
+            (pageHeight > 0 ? (scrollTop / pageHeight) * 100 : 0) + "%";
+    }
+
+    if (backToTop) {
+        backToTop.classList.toggle("show", scrollTop > 400);
+    }
+
+}, { passive: true });
+
+if (backToTop) {
+    backToTop.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+}
 
 
 // ================================
@@ -41,42 +67,32 @@ if (contactForm) {
 
         const submitButton = contactForm.querySelector(".submit-button");
 
-        submitButton.innerText = "Sending...";
+        submitButton.textContent = "Sending...";
         submitButton.disabled = true;
 
         try {
 
-            const formData = new FormData(contactForm);
-
             const response = await fetch(contactForm.action, {
                 method: "POST",
-                body: formData,
-                headers: {
-                    "Accept": "application/json"
-                }
+                body: new FormData(contactForm),
+                headers: { "Accept": "application/json" }
             });
 
-            if (response.ok) {
-
-                contactForm.reset();
-
-                submitButton.innerText = "Send Inquiry →";
-                submitButton.disabled = false;
-
-                document.getElementById("successPopup").classList.add("show");
-
-            } else {
-
+            if (!response.ok) {
                 throw new Error("Form submission failed");
-
             }
+
+            contactForm.reset();
+            document.getElementById("successPopup").classList.add("show");
 
         } catch (error) {
 
-            submitButton.innerText = "Send Inquiry →";
-            submitButton.disabled = false;
-
             alert("Something went wrong. Please try again.");
+
+        } finally {
+
+            submitButton.textContent = "Send Inquiry →";
+            submitButton.disabled = false;
 
         }
 
@@ -95,17 +111,15 @@ const navLinks = document.querySelector(".nav-links");
 if (menuToggle && navLinks) {
 
     menuToggle.addEventListener("click", function () {
-        navLinks.classList.toggle("active");
+        const isOpen = navLinks.classList.toggle("active");
+        menuToggle.setAttribute("aria-expanded", isOpen);
     });
 
-    const navigationLinks = document.querySelectorAll(".nav-links a");
-
-    navigationLinks.forEach(function (link) {
-
+    navLinks.querySelectorAll("a").forEach(function (link) {
         link.addEventListener("click", function () {
             navLinks.classList.remove("active");
+            menuToggle.setAttribute("aria-expanded", "false");
         });
-
     });
 
 }
@@ -121,26 +135,18 @@ const revealElements = document.querySelectorAll(
 
 const revealObserver = new IntersectionObserver(
     function (entries) {
-
         entries.forEach(function (entry) {
-
             if (entry.isIntersecting) {
                 entry.target.classList.add("show");
             }
-
         });
-
     },
-    {
-        threshold: 0.15
-    }
+    { threshold: 0.15 }
 );
 
 revealElements.forEach(function (element) {
-
     element.classList.add("reveal");
     revealObserver.observe(element);
-
 });
 
 
@@ -150,32 +156,31 @@ revealElements.forEach(function (element) {
 
 const themeToggle = document.getElementById("themeToggle");
 
+function safeStorage(action, key, value) {
+    try {
+        return action === "get"
+            ? localStorage.getItem(key)
+            : localStorage.setItem(key, value);
+    } catch (error) {
+        return null;
+    }
+}
+
 if (themeToggle) {
 
-    const savedTheme = localStorage.getItem("aura-theme");
+    const savedTheme = safeStorage("get", "aura-theme");
 
     if (savedTheme === "dark") {
-
         document.body.classList.add("dark-theme");
-        themeToggle.innerText = "☀️";
-
+        themeToggle.textContent = "☀️";
     }
 
     themeToggle.addEventListener("click", function () {
 
-        document.body.classList.toggle("dark-theme");
+        const isDark = document.body.classList.toggle("dark-theme");
 
-        if (document.body.classList.contains("dark-theme")) {
-
-            themeToggle.innerText = "☀️";
-            localStorage.setItem("aura-theme", "dark");
-
-        } else {
-
-            themeToggle.innerText = "🌙";
-            localStorage.setItem("aura-theme", "light");
-
-        }
+        themeToggle.textContent = isDark ? "☀️" : "🌙";
+        safeStorage("set", "aura-theme", isDark ? "dark" : "light");
 
     });
 
@@ -186,123 +191,108 @@ if (themeToggle) {
 // SERVICE DETAILS MODAL
 // ================================
 
+const services = {
+    web: {
+        number: "01 / SERVICE",
+        title: "Web Development",
+        description: "We create fast, responsive and modern websites designed around your business goals.",
+        features: [
+            "Responsive Website Design",
+            "E-Commerce Development",
+            "Performance Optimization",
+            "SEO-ready Structure"
+        ]
+    },
+    uiux: {
+        number: "02 / SERVICE",
+        title: "UI / UX Design",
+        description: "We design clean and user-friendly interfaces that make digital products easy and enjoyable to use.",
+        features: [
+            "Modern Interface Design",
+            "User-Friendly Layouts",
+            "Mobile & Desktop Design",
+            "Wireframes & Visual Concepts"
+        ]
+    },
+    brand: {
+        number: "03 / SERVICE",
+        title: "Brand Identity",
+        description: "We create memorable visual identities that help businesses look professional and stand out.",
+        features: [
+            "Logo & Visual Identity",
+            "Color & Typography System",
+            "Brand Style Direction",
+            "Professional Brand Presentation"
+        ]
+    }
+};
+
 const serviceModal = document.getElementById("serviceModal");
-const modalNumber = document.getElementById("modalNumber");
-const modalTitle = document.getElementById("modalTitle");
-const modalDescription = document.getElementById("modalDescription");
-const modalFeatures = document.getElementById("modalFeatures");
 
-function openServiceModal(service) {
+function openServiceModal(key) {
 
-    if (service === "web") {
+    const service = services[key];
 
-        modalNumber.innerText = "01 / SERVICE";
-        modalTitle.innerText = "Web Development";
+    if (!service || !serviceModal) return;
 
-        modalDescription.innerText =
-            "We create fast, responsive and modern websites designed around your business goals.";
+    document.getElementById("modalNumber").textContent = service.number;
+    document.getElementById("modalTitle").textContent = service.title;
+    document.getElementById("modalDescription").textContent = service.description;
 
-        modalFeatures.innerHTML = `
-            <li>Responsive Website Design</li>
-            <li>E-Commerce Development</li>
-            <li>Performance Optimization</li>
-            <li>SEO-ready Structure</li>
-        `;
-
-    }
-
-    else if (service === "uiux") {
-
-        modalNumber.innerText = "02 / SERVICE";
-        modalTitle.innerText = "UI / UX Design";
-
-        modalDescription.innerText =
-            "We design clean and user-friendly interfaces that make digital products easy and enjoyable to use.";
-
-        modalFeatures.innerHTML = `
-            <li>Modern Interface Design</li>
-            <li>User-Friendly Layouts</li>
-            <li>Mobile & Desktop Design</li>
-            <li>Wireframes & Visual Concepts</li>
-        `;
-
-    }
-
-    else if (service === "brand") {
-
-        modalNumber.innerText = "03 / SERVICE";
-        modalTitle.innerText = "Brand Identity";
-
-        modalDescription.innerText =
-            "We create memorable visual identities that help businesses look professional and stand out.";
-
-        modalFeatures.innerHTML = `
-            <li>Logo & Visual Identity</li>
-            <li>Color & Typography System</li>
-            <li>Brand Style Direction</li>
-            <li>Professional Brand Presentation</li>
-        `;
-
-    }
+    document.getElementById("modalFeatures").innerHTML =
+        service.features.map(function (feature) {
+            return "<li>" + feature + "</li>";
+        }).join("");
 
     serviceModal.classList.add("show");
 
 }
 
-
 function closeServiceModal() {
-
     if (serviceModal) {
         serviceModal.classList.remove("show");
     }
-
 }
 
-
 if (serviceModal) {
-
     serviceModal.addEventListener("click", function (event) {
-
         if (event.target === serviceModal) {
             closeServiceModal();
         }
-
     });
-
 }
 
 
-document.addEventListener("keydown", function (event) {
+// ================================
+// SUCCESS POPUP
+// ================================
 
+const successPopup = document.getElementById("successPopup");
+
+function closeSuccessPopup() {
+    if (successPopup) {
+        successPopup.classList.remove("show");
+    }
+}
+
+if (successPopup) {
+    successPopup.addEventListener("click", function (event) {
+        if (event.target === successPopup) {
+            closeSuccessPopup();
+        }
+    });
+}
+
+
+// ================================
+// ESCAPE KEY CLOSES POPUPS
+// ================================
+
+document.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
         closeServiceModal();
+        closeSuccessPopup();
     }
-
-});
-
-
-// ================================
-// AURA SCROLL PROGRESS
-// ================================
-
-window.addEventListener("scroll", function () {
-
-    const scrollTop = window.scrollY;
-
-    const pageHeight =
-        document.documentElement.scrollHeight -
-        document.documentElement.clientHeight;
-
-    const progress =
-        (scrollTop / pageHeight) * 100;
-
-    const scrollProgress =
-        document.getElementById("scrollProgress");
-
-    if (scrollProgress) {
-        scrollProgress.style.width = progress + "%";
-    }
-
 });
 
 
@@ -310,11 +300,35 @@ window.addEventListener("scroll", function () {
 // ANIMATED STATS
 // ================================
 
+function animateCounter(element, target, suffix) {
+
+    if (!element) return;
+
+    suffix = suffix || "";
+
+    let current = 0;
+    const increment = target / 40;
+
+    const timer = setInterval(function () {
+
+        current += increment;
+
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+
+        element.textContent = Math.floor(current) + suffix;
+
+    }, 30);
+
+}
+
 const statsSection = document.querySelector(".stats");
 
-let statsAnimated = false;
-
 if (statsSection) {
+
+    let statsAnimated = false;
 
     const statsObserver = new IntersectionObserver(
         function (entries) {
@@ -323,196 +337,16 @@ if (statsSection) {
 
                 statsAnimated = true;
 
-                animateCounter(
-                    document.getElementById("projectsCount"),
-                    25,
-                    "+"
-                );
-
-                animateCounter(
-                    document.getElementById("brandsCount"),
-                    12
-                );
-
-                animateCounter(
-                    document.getElementById("passionCount"),
-                    100,
-                    "%"
-                );
+                animateCounter(document.getElementById("projectsCount"), 4);
+                animateCounter(document.getElementById("brandsCount"), 4);
+                animateCounter(document.getElementById("passionCount"), 100, "%");
 
             }
 
         },
-        {
-            threshold: 0.5
-        }
+        { threshold: 0.5 }
     );
 
     statsObserver.observe(statsSection);
-
-}
-
-
-function animateCounter(element, target, suffix = "") {
-
-    if (!element) return;
-
-    let current = 0;
-
-    const increment = target / 40;
-
-    const timer = setInterval(function () {
-
-        current += increment;
-
-        if (current >= target) {
-
-            current = target;
-            clearInterval(timer);
-
-        }
-
-        element.innerText =
-            Math.floor(current) + suffix;
-
-    }, 30);
-
-}
-function closeSuccessPopup() {
-    document.getElementById("successPopup").classList.remove("show");
-}
-// ================================
-// PROJECT MODAL
-// ================================
-
-const projectModal = document.getElementById("projectModal");
-
-function openProjectModal(project) {
-
-    const category = document.getElementById("projectCategory");
-    const title = document.getElementById("projectTitle");
-    const description = document.getElementById("projectDescription");
-    const services = document.getElementById("projectServices");
-    const focus = document.getElementById("projectFocus");
-
-    if (project === "fashion") {
-
-        category.innerText = "01 / E-COMMERCE";
-        title.innerText = "Luxury Fashion";
-        description.innerText =
-            "A premium fashion website designed to create a smooth and modern shopping experience.";
-        services.innerText =
-            "Web Design · Development · Responsive UI";
-        focus.innerText =
-            "Premium digital experience";
-
-    }
-
-    else if (project === "branding") {
-
-        category.innerText = "02 / BRANDING";
-        title.innerText = "Creative Identity";
-        description.innerText =
-            "A clean visual identity concept designed to give a modern brand a strong digital presence.";
-        services.innerText =
-            "Brand Identity · UI Design · Visual Direction";
-        focus.innerText =
-            "Memorable brand presence";
-
-    }
-
-    else if (project === "business") {
-
-        category.innerText = "03 / DIGITAL";
-        title.innerText = "Modern Business";
-        description.innerText =
-            "A professional business website focused on clarity, trust and a strong online presence.";
-        services.innerText =
-            "Web Development · UI/UX · Responsive Design";
-        focus.innerText =
-            "Business growth";
-
-    }
-
-    projectModal.classList.add("show");
-}
-
-
-function closeProjectModal() {
-
-    if (projectModal) {
-        projectModal.classList.remove("show");
-    }
-
-}
-
-
-if (projectModal) {
-
-    projectModal.addEventListener("click", function (event) {
-
-        if (event.target === projectModal) {
-            closeProjectModal();
-        }
-
-    });
-
-}
-
-
-document.addEventListener("keydown", function (event) {
-
-    if (event.key === "Escape") {
-        closeProjectModal();
-    }
-
-});
-// ===== SUCCESS POPUP - OUTSIDE CLICK CLOSE =====
-const successPopup = document.getElementById('successPopup');
-
-if (successPopup) {
-    successPopup.addEventListener('click', function(event) {
-        if (event.target === successPopup) {
-            closeSuccessPopup();
-        }
-    });
-}
-// WORK CARD CLICK
-
-const workCards = document.querySelectorAll(".work-card");
-
-workCards.forEach(function (card, index) {
-
-    card.addEventListener("click", function () {
-
-        const projects = ["fashion", "branding", "business"];
-
-        openProjectModal(projects[index]);
-
-    });
-
-});
-// BACK TO TOP
-
-const backToTop = document.getElementById("backToTop");
-
-if (backToTop) {
-
-    window.addEventListener("scroll", function () {
-
-        if (window.scrollY > 400) {
-            backToTop.classList.add("show");
-        } else {
-            backToTop.classList.remove("show");
-        }
-
-    });
-
-    backToTop.addEventListener("click", function () {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    });
 
 }

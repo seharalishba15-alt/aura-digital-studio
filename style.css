@@ -399,7 +399,7 @@ a {
 
 .work-grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
 }
 
@@ -422,8 +422,7 @@ a {
 }
 
 .work-large {
-    grid-row: span 2;
-    min-height: 620px;
+    min-height: 300px;
 }
 
 .work-card:nth-child(2) {
@@ -441,6 +440,14 @@ a {
             135deg,
             #111,
             #444
+        );
+}
+.work-card:nth-child(4) {
+    background:
+        linear-gradient(
+            135deg,
+            #181818,
+            #6c5ce7
         );
 }
 
@@ -661,7 +668,7 @@ footer p {
     }
 
     .work-large {
-        min-height: 450px;
+        min-height: 300px;
     }
 
     .about,
